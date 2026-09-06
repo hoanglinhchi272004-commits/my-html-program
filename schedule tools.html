@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Voice Checklist Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@800&display=swap" rel="stylesheet">
+
+    <style>
+.topic-dropdown {
+    position: relative;
+    width: 147px;
+}
+
+.topic-dropdown-btn {
+    width: 75%;
+    height: 42px;
+    padding: 8px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    color: #1e293b;
+background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.topic-dropdown-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+}
+
+.topic-dropdown.open .topic-dropdown-btn {
+    background: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.10);
+}
+
+.topic-arrow {
+    font-size: 17px;
+    color: #64748b;
+
+    transition: transform 0.2s ease;
+}
+
+.topic-dropdown.open .topic-arrow {
+    transform: rotate(-90deg);
+}
+
+.topic-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+
+    padding: 6px;
+
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+
+    box-shadow:
+        0 12px 30px rgba(15, 23, 42, 0.10),
+        0 3px 8px rgba(15, 23, 42, 0.05);
+
+    z-index: 1000;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+
+    transition: all 0.18s ease;
+}
+
+.topic-dropdown.open .topic-dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.topic-dropdown-menu button {
+    width: 100%;
+    padding: 10px 11px;
+
+    display: flex;
+    align-items: center;
+
+    border: none;
+    border-radius: 9px;
+
+    background: transparent;
+    color: #1e293b;
+
+    font-size: 14px;
+    text-align: left;
+
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.topic-dropdown-menu button:hover {
+    background: #f1f5f9;
+}
+
+.topic-dropdown-menu button.selected {
+    background: #eff6ff;
+    color: #2563eb;
+    font-weight: 600;
+}
+
+        :root { --primary:#7c981463; --bg: #c2bb8c36; --text: #1e293b; --primary-dark: #6a8211; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 20px; max-width: 720px; margin: 0 auto; transition: max-width 0.3s ease;} 
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 2px solid #e2e8f0; }
+        #realTimeClock { font-size: 1.2rem; font-weight: bold; color: var(--primary-dark); }
+        
+        #settingsBtn { width: 40px; height: 40px; padding: 0; border: none; background: transparent; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; position: relative; top: -5px; vertical-align: middle; color: #64748b; }
+        .gear { width: 22px; height: 22px; background: currentColor; clip-path: polygon(36% 0%, 64% 0%, 67% 13%, 76% 17%, 87% 10%, 97% 20%, 90% 31%, 94% 40%, 100% 43%, 100% 57%, 94% 60%, 90% 69%, 97% 80%, 87% 90%, 76% 83%, 67% 87%, 64% 100%, 36% 100%, 33% 87%, 24% 83%, 13% 90%, 3% 80%, 10% 69%, 6% 60%, 0% 57%, 0% 43%, 6% 40%, 10% 31%, 3% 20%, 13% 10%, 24% 17%, 33% 13%); mask: radial-gradient(circle at center, transparent 0 4px, #000 4.5px); -webkit-mask: radial-gradient(circle at center, transparent 0 4px, #000 4.5px); }
+        h2 { font-family: "Montserrat", sans-serif; font-weight: 800; display: inline-block; }
+
+        /* --- UI COMPACT PROGRESS BAR --- */
+        .progress-container {  width: 60%; max-width: 700px; background: #e2e8f0; border-radius: 8px; height: 22px;   margin: 0 auto 15px;; position: relative; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
+        .progress-fill { height: 100%; background: #87a615; width: 0%; transition: width 0.4s ease; }
+        .progress-text { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; color: #1e293b; z-index: 2; }
+
+        .tabs-container { width: 99%; margin-left: auto; margin-right: auto; display: flex; justify-content: center;
+    align-items: center; gap: 6px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 4px;}
+        .tab-btn { flex: 1; min-width: 50px; background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 4px; font-size: 12px; color: var(--text); cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; transition: all 0.2s; }
+        .tab-btn .tab-label { font-weight: 600; font-size: 11px; }
+        .tab-btn .tab-date { font-size: 10px; color: #64748b; }
+        .tab-btn.active { background-color: var(--primary); color: #1e293b; border-color: var(--primary-dark); font-weight: bold; }
+        .tab-btn.active .tab-date { color: #334155; font-weight: normal; }
+
+        .input-group { width: 99%; margin-left: auto; margin-right: auto; display: flex; gap: 8px; margin-bottom: 15px; flex-wrap: wrap; }
+        .input-group select { padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; background: #fff; cursor: pointer; color: var(--text); font-weight: 500; min-width: 110px;}
+        input[type="text"] { flex: 1; min-width: 150px; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 15px; }
+        button { border: none; border-radius: 8px; padding: 12px 16px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        #addBtn { background-color: var(--primary-dark); color: white; }
+
+        /* Voice Mic */
+        .mic-wrap { position: relative; display: flex; align-items: center;}
+        #micBtn { width: 44px; height: 44px; border: none; border-radius: 50%; background: #e56635; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15); flex-shrink: 0; }
+        .record-icon { display: block; width: 14px; height: 14px; background: #fff; border-radius: 2px; }
+        .mic-wave { display: flex; align-items: center; justify-content: center; gap: 3px; height: 24px; }
+        .mic-wave i { display: block; width: 3px; height: 8px; background: #fff; border-radius: 3px; animation: mic-wave 0.7s ease-in-out infinite alternate; }
+        .mic-wave i:nth-child(1) { animation-delay: 0s; } .mic-wave i:nth-child(2) { animation-delay: 0.15s; } .mic-wave i:nth-child(3) { animation-delay: 0.3s; } .mic-wave i:nth-child(4) { animation-delay: 0.45s; }
+        @keyframes mic-wave { from { height: 6px; } to { height: 22px; } }
+        #micBtn.listening { background-color: #dc2626; animation: pulse 1.4s infinite; }
+        #micBtn.processing { background-color: #f59e0b; animation: spin-pulse 1s infinite linear; }
+        #micBtn.error { background-color: #b91c1c; animation: shake 0.4s; }
+        @keyframes pulse { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0.5); } 70% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(239,68,68,0); } 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239,68,68,0); } }
+
+        .reuse-row { margin-bottom: 20px; }
+        #reuseBtn { width: 100%; background-color: #fff; color: #6a8211; border: 1.5px solid #87a615; display: flex; align-items: center; justify-content: center; padding: 10px; font-size: 14px;}
+
+        /* --- UI TOPIC GROUPS --- */
+        #boardContainer { display: flex; flex-direction: column; gap: 12px; }
+
+        /* DESKTOP RESPONSIVE TẠI ĐÂY */
+        @media (min-width: 768px) {
+            body {
+                max-width: 1200px; /* Bổ sung khoảng trống để hiển thị nhiều cột ngang */
+            }
+            #boardContainer {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 16px;
+                align-items: start; /* Ngăn chặn các task bị giãn chiều cao không đồng đều */
+            }
+        }
+
+        .topic-group { background: #fff; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.04); overflow: hidden; border: 1px solid #e2e8f0; }
+        .topic-header { padding: 12px 15px; background: #f8fafc; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; color: #334155; font-size: 14px; user-select: none; transition: background 0.2s;}
+        .topic-header:hover { background: #f1f5f9; }
+        .topic-header .topic-count { font-size: 12px; color: #64748b; background: #e2e8f0; padding: 2px 8px; border-radius: 12px; margin-left: 8px;}
+        
+        .topic-list { max-height: 350px; overflow-y: auto; list-style: none; transition: max-height 0.3s ease; scroll-behavior: smooth;}
+        .topic-list.collapsed { max-height: 0; overflow: hidden; border-bottom: none; }
+        
+        .task-item { display: flex; align-items: center; padding: 12px 15px; border-bottom: 1px solid #f1f5f9; background: white; transition: 0.2s; }
+        .task-item:last-child { border-bottom: none; }
+        .task-item input[type="checkbox"] { width: 22px; height: 22px; margin-right: 12px; accent-color: var(--primary-dark); cursor: pointer; flex-shrink: 0;}
+        .task-item span { flex: 1; font-size: 15px; color: var(--text); }
+        .task-item.completed span { text-decoration: line-through; color: #94a3b8; }
+        .delete-btn { background: transparent; color: #ef4444; padding: 5px; font-size: 16px; cursor: pointer; flex-shrink: 0; }
+
+        /* Module Sidebar & Thuốc */
+        .sidebar { position: fixed; top: 0; right: -280px; width: 280px; height: 100%; background: #fff; box-shadow: -2px 0 10px rgba(0,0,0,0.1); transition: right 0.3s ease; z-index: 1000; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .sidebar.active { right: 0; }
+        .sidebar-header { font-weight: bold; font-size: 1.2rem; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .sidebar-menu-item { padding: 15px; background: #f8fafc; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; justify-content: space-between; }
+        
+        .med-modal { position: fixed; inset: 0; background: #f1f5f9; z-index: 10000; display: none; flex-direction: column; padding: 20px; overflow: hidden; box-sizing: border-box; }
+        .med-modal.active { display: flex; }
+        .med-form { flex-shrink: 0; display: flex; flex-wrap: wrap; gap: 10px; background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; justify-content: center; }
+        .med-form input, .med-form select { flex: 1; min-width: 100px; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+        
+        .med-grid { display: flex; gap: 15px; flex: 1; overflow-y: auto; flex-direction: column; scroll-behavior: smooth; width: 100%; }
+        .med-col { background: white; border-radius: 10px; padding: 15px; flex: 1; display: flex; flex-direction: column; min-height: 250px; }
+        @media (min-width: 768px) { .med-grid { flex-direction: row; overflow: hidden; } .med-col { overflow-y: auto; width: 25%; height: 100%; min-height: unset; } }
+        
+        .med-col-header { font-weight: bold; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 2px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; z-index: 2;}
+        .med-task { background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 8px; display: flex; align-items: center; border-left: 4px solid var(--primary-dark); }
+        .med-task.completed { opacity: 0.6; }
+        .med-task-info { font-size: 13px; flex: 1; }
+        
+        .schedule-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.45); z-index: 11000; display: none; align-items: center; justify-content: center; padding: 12px; }
+        .schedule-overlay.active { display: flex; }
+        .schedule-dialog { width: min(420px, calc(100vw - 24px)); background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 18px 50px rgba(0,0,0,0.22); }
+        .clock-ui { display: flex; flex-direction: column; align-items: center; width: 100%; margin-top: 5px; }
+        .clock-container { position: relative; width: 260px; height: 260px; background: #e2e8f050; border-radius: 50%; margin: 15px auto; border: 2px solid #cbd5e1; }
+        .clock-item { position: absolute; width: 34px; height: 34px; margin-left: -17px; margin-top: -17px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; background: white; border: 1px solid #cbd5e1; user-select: none; }
+        .clock-item.selected { background: var(--primary-dark); color: white; border-color: var(--primary-dark); transform: scale(1.1); z-index: 2;}
+        .clock-item.disabled { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; border-color: #e2e8f0; }
+        .clock-item.minute-item { border-color: #94a3b8; color: #334155; }
+        .clock-center { position: absolute; top: 50%; left: 50%; width: 8px; height: 8px; margin-left: -4px; margin-top: -4px; background: var(--primary-dark); border-radius: 50%; }
+        .med-time-summary { width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; margin-top:10px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div>
+         <h2 class="checklist-title">Checklist</h2>
+            <button id="settingsBtn" onclick="toggleSidebar()" aria-label="Settings"><span class="gear"></span></button>
+        </div>
+        <div id="realTimeClock">00:00:00</div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-fill" id="progressFill"></div>
+        <div class="progress-text" id="progressText">0/0</div>
+    </div>
+
+    <div class="tabs-container" id="tabsContainer"></div>
+
+    <div class="input-group">
+        <div class="mic-wrap">
+            <button id="micBtn" title="Nhấn để nói (Tiếng Việt)"><span class="record-icon"></span></button>
+</div>
+
+<!-- Topic Selector -->
+<div class="topic-dropdown" id="topicDropdown">
+
+    <button type="button" class="topic-dropdown-btn" id="topicDropdownBtn">
+        <span>👤 Cá nhân</span>
+        <span class="topic-arrow">◀</span>
+    </button>
+
+    <div class="topic-dropdown-menu">
+        <button type="button" data-value="Morning">🌅 Sáng</button>
+        <button type="button" data-value="Work">💻 Công việc</button>
+        <button type="button" data-value="Health">💪 Sức khỏe</button>
+        <button type="button" data-value="Personal" class="selected">👤 Cá nhân</button>
+        <button type="button" data-value="Evening">🌙 Tối</button>
+    </div>
+
+</div>
+
+<!-- Giữ id này để code hiện tại vẫn hoạt động -->
+<input type="hidden" id="taskTopic" value="Personal">
+
+<input type="text" id="taskInput" placeholder="Nhập nhiệm vụ...">
+<button id="addBtn">Thêm</button>
+</div>
+
+
+    <div class="reuse-row">
+        <button id="reuseBtn" title="Lặp lại các công việc của lần gần nhất">↺ Lặp lại danh sách gần nhất</button>
+    </div>
+
+    <!-- MAIN BOARD: Thay ul bằng div container để chứa các Topic Group -->
+    <div id="boardContainer"></div>
+
+
+    <!-- ==================== SIDEBAR & MODULE THUỐC ==================== -->
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+            Cài đặt <button onclick="toggleSidebar()" style="background:none; border:none; color:#ef4444; font-size: 18px; cursor: pointer;">✖</button>
+        </div>
+        <div class="sidebar-menu-item" onclick="openMedModal()">
+            <span>💊 Quản lý Thuốc</span><span>></span>
+        </div>
+        <div style="padding: 15px; background: #f8fafc; border-radius: 8px;">
+            <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Nhắc lại (Snooze):</label>
+            <select id="snoozeSelect" onchange="updateSnooze(this.value)" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1;">
+                <option value="5">5 Phút</option>
+                <option value="10">10 Phút</option>
+                <option value="15">15 Phút</option>
+                <option value="30">30 Phút</option>
+            </select>
+        </div>
+    </div>
+    
+    <div id="medModal" class="med-modal">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h3 style="margin: 0; color: var(--text);">Quản lý Thuốc</h3>
+            <button onclick="closeMedModal()" style="background:#ef4444; color:white; padding:8px 16px; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Xong</button>
+        </div>
+        
+        <div class="med-form">
+            <div style="display:flex; width: 100%; gap: 5px;">
+                <input type="text" id="medName" placeholder="Tên thuốc (VD: Dapagliflozin)">
+                <input type="text" id="medQty" placeholder="Số lượng" style="max-width: 90px;">
+                <select id="medSession" onchange="renderClockUI()">
+                    <option value="Sáng">Sáng</option><option value="Trưa">Trưa</option><option value="Chiều">Chiều</option><option value="Tối">Tối</option>
+                </select>
+            </div>
+            <div class="med-time-summary">
+                <strong id="medTimeSummary">Chưa hẹn giờ</strong>
+                <button type="button" onclick="openScheduleModal()" style="background:var(--primary-dark); color:white; padding:8px 14px; font-size:13px;">Hẹn giờ</button>
+            </div>
+            <button onclick="addMedicine()" style="background:var(--primary-dark); color:white; width:100%; margin-top:5px; padding:12px; font-size:15px;">Lưu Thuốc</button>
+        </div>
+
+        <div class="med-grid" id="medGrid"></div>
+    </div>
+
+    <!-- Popup chọn giờ -->
+    <div id="scheduleModal" class="schedule-overlay" aria-hidden="true">
+        <div class="schedule-dialog">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h4 style="margin:0;">Hẹn giờ uống thuốc</h4>
+                <button type="button" onclick="closeScheduleModal()" style="background:none; border:none; font-size:20px; color:#64748b; cursor:pointer;">✕</button>
+            </div>
+            <div id="scheduleClockUI" class="clock-ui"></div>
+            <div style="display:flex; gap:10px; margin-top:15px;">
+                <button type="button" onclick="closeScheduleModal()" style="flex:1; background:#e2e8f0; color:#334155;">Hủy</button>
+                <button type="button" onclick="saveScheduleTime()" style="flex:1; background:var(--primary-dark); color:white;">Xác nhận</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- LOGIC APP LÕI ---
+        function updateClock() { document.getElementById('realTimeClock').innerText = new Date().toLocaleTimeString('vi-VN'); }
+        setInterval(updateClock, 1000); updateClock();
+
+        let selectedDate = new Date(); 
+        function getDateKey(date) { return date.toLocaleDateString('vi-VN'); }
+        function getCurrentDateKey() { return getDateKey(selectedDate); }
+        function normalizeText(s) { return (s || '').trim().toLowerCase().replace(/\s+/g, ' '); }
+
+        const tabsContainer = document.getElementById('tabsContainer');
+
+        function renderTabs() {
+            tabsContainer.innerHTML = '';
+            const offsets = [ { offset: -2, label: 'Hôm trước' }, { offset: -1, label: 'Hôm qua' }, { offset: 0, label: 'Hôm nay' }, { offset: 1, label: 'Ngày mai' }, { offset: 2, label: 'Ngày kia' } ];
+            offsets.forEach(item => {
+                const d = new Date(); d.setDate(d.getDate() + item.offset);
+                const key = getDateKey(d);
+                const btn = document.createElement('button');
+                btn.className = `tab-btn ${getDateKey(selectedDate) === key ? 'active' : ''}`;
+                btn.innerHTML = `<span class="tab-label">${item.label}</span><span class="tab-date">${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}</span>`;
+                btn.onclick = () => { selectedDate = d; loadTasksForSelectedDate(); renderTabs(); };
+                tabsContainer.appendChild(btn);
+            });
+        }
+
+        let tasks = JSON.parse(localStorage.getItem(getCurrentDateKey())) || [];
+        function saveTasks() { localStorage.setItem(getCurrentDateKey(), JSON.stringify(tasks)); }
+
+        function loadTasksForSelectedDate() {
+            tasks = JSON.parse(localStorage.getItem(getCurrentDateKey())) || [];
+            renderTasks();
+            if(document.getElementById('medModal').classList.contains('active')) renderMedGrid();
+        }
+
+        const collapsedTopicsState = {};
+
+        function renderTasks() {
+            const total = tasks.length;
+            const completed = tasks.filter(t => t.completed).length;
+            const pFill = document.getElementById('progressFill');
+            const pText = document.getElementById('progressText');
+            if (total === 0) {
+                pFill.style.width = '0%'; pText.innerText = 'Chưa có task';
+            } else {
+                pFill.style.width = `${(completed / total) * 100}%`;
+                pText.innerText = `${completed} / ${total} hoàn thành`;
+            }
+
+            const groups = {};
+            tasks.forEach((task, index) => {
+                if (task.isMedicine) task.topic = 'Thuốc';
+                else if (!task.topic) task.topic = 'Personal';
+                
+                if (!groups[task.topic]) groups[task.topic] = [];
+                groups[task.topic].push({ ...task, originalIndex: index });
+            });
+
+            const boardContainer = document.getElementById('boardContainer');
+            boardContainer.innerHTML = '';
+            
+            const topicOrder = ["Thuốc", "Morning", "Work", "Health", "Personal", "Evening"];
+            const availableTopics = Object.keys(groups).sort((a, b) => {
+                let idxA = topicOrder.indexOf(a); let idxB = topicOrder.indexOf(b);
+                if (idxA === -1) idxA = 99; if (idxB === -1) idxB = 99;
+                return idxA - idxB;
+            });
+
+            availableTopics.forEach(topic => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'topic-group';
+                
+                const groupTasks = groups[topic];
+                const countDone = groupTasks.filter(t => t.completed).length;
+                const isCollapsed = collapsedTopicsState[topic] === true;
+
+                const header = document.createElement('div');
+                header.className = 'topic-header';
+                
+                let topicIcon = '📌';
+                if(topic === 'Thuốc') topicIcon = '💊';
+                if(topic === 'Morning') topicIcon = '🌅';
+                if(topic === 'Work') topicIcon = '💻';
+                if(topic === 'Health') topicIcon = '💪';
+                if(topic === 'Personal') topicIcon = '👤';
+                if(topic === 'Evening') topicIcon = '🌙';
+
+                header.innerHTML = `
+                    <div style="display:flex; align-items:center;">
+                        <span style="margin-right:6px;">${topicIcon}</span> ${topic}
+                        <span class="topic-count">${countDone}/${groupTasks.length}</span>
+                    </div>
+                    <span class="toggle-icon">${isCollapsed ? '▶' : '▼'}</span>
+                `;
+                
+                const list = document.createElement('ul');
+                list.className = `topic-list ${isCollapsed ? 'collapsed' : ''}`;
+                
+                header.onclick = () => {
+                    const willCollapse = !list.classList.contains('collapsed');
+                    list.classList.toggle('collapsed', willCollapse);
+                    collapsedTopicsState[topic] = willCollapse;
+                    header.querySelector('.toggle-icon').innerText = willCollapse ? '▶' : '▼';
+                };
+
+                groupTasks.forEach(t => {
+                    const li = document.createElement('li');
+                    li.className = `task-item ${t.completed ? 'completed' : ''}`;
+                    li.innerHTML = `
+                        <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.originalIndex})">
+                        <span>${t.text}</span>
+                        <button class="delete-btn" onclick="deleteTask(${t.originalIndex})">✖</button>
+                    `;
+                    list.appendChild(li);
+                });
+                
+                groupDiv.appendChild(header);
+                groupDiv.appendChild(list);
+                boardContainer.appendChild(groupDiv);
+            });
+        }
+
+        window.toggleTask = (index) => {
+            tasks[index].completed = !tasks[index].completed;
+            if (tasks[index].completed) playTing();
+            saveTasks(); 
+            renderTasks();
+            if(document.getElementById('medModal').classList.contains('active')) renderMedGrid();
+        };
+
+        window.deleteTask = (index) => {
+            tasks.splice(index, 1);
+            saveTasks(); renderTasks(); renderMedGrid();
+        };
+
+        function playTing() {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const now = ctx.currentTime;
+            function note(freq, delay, duration, volume) {
+                const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                osc.type = "sine"; osc.frequency.setValueAtTime(freq, now + delay);
+                gain.gain.setValueAtTime(0.001, now + delay);
+                gain.gain.exponentialRampToValueAtTime(volume, now + delay + 0.025);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + delay + duration);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(now + delay); osc.stop(now + delay + duration);
+            }
+            note(659.25, 0.00, 0.28, 0.075); note(783.99, 0.09, 0.30, 0.065); note(987.77, 0.18, 0.42, 0.045);
+        }
+
+        function addNewTask(text) {
+            if (!text.trim()) return;
+            const selectedTopic = document.getElementById('taskTopic').value;
+            tasks.push({ text: text.trim(), completed: false, topic: selectedTopic });
+            saveTasks(); renderTasks(); taskInput.value = '';
+        }
+
+        function findMostRecentTaskDate(maxDaysBack = 365) {
+            for (let i = 1; i <= maxDaysBack; i++) {
+                const d = new Date(selectedDate); d.setDate(d.getDate() - i);
+                const stored = localStorage.getItem(getDateKey(d));
+                if (stored) {
+                    try {
+                        const arr = JSON.parse(stored);
+                        if (Array.isArray(arr) && arr.length > 0) return { key: getDateKey(d), tasks: arr };
+                    } catch (e) { }
+                }
+            } return null;
+        }
+
+        function loadPreviousTasks() {
+            const result = findMostRecentTaskDate();
+            if (!result) return alert('Không tìm thấy công việc nào trước đó!');
+            const existingTexts = new Set(tasks.map(t => normalizeText(t.text)));
+            
+            result.tasks.forEach(t => {
+                const norm = normalizeText(t.text);
+                if (!t.text || existingTexts.has(norm)) return;
+                
+                const newTask = { 
+                    text: t.text, 
+                    completed: false, 
+                    topic: t.topic || (t.isMedicine ? 'Thuốc' : 'Personal')
+                };
+                
+                if (t.isMedicine) {
+                    newTask.isMedicine = true; newTask.medName = t.medName; newTask.medQty = t.medQty; newTask.medSession = t.medSession; newTask.medTime = t.medTime; newTask.lastNotified = 0;
+                }
+                tasks.push(newTask); existingTexts.add(norm);
+            });
+            saveTasks(); renderTasks(); renderMedGrid();
+        }
+
+        document.getElementById('addBtn').onclick = () => addNewTask(taskInput.value);
+        document.getElementById('reuseBtn').onclick = () => loadPreviousTasks();
+
+        // --- MODULE THUỐC & UI ---
+        let selectedHour = null; let selectedMinute = '00';
+        let savedHour = null; let savedMinute = '00';
+        const medBounds = { 'Sáng': [5,6,7,8,9,10], 'Trưa': [11,12], 'Chiều': [13,14,15,16,17], 'Tối': [18,19,20,21] };
+        
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('active'); }
+        function openMedModal() { 
+            toggleSidebar();
+            if(Notification.permission !== "granted" && Notification.permission !== "denied") Notification.requestPermission();
+            document.getElementById('medModal').classList.add('active');
+            savedHour = null; savedMinute = '00'; selectedHour = null; selectedMinute = '00';
+            updateMedTimeSummary(); renderMedGrid();
+        }
+        function closeMedModal() { closeScheduleModal(); document.getElementById('medModal').classList.remove('active'); }
+
+        function updateMedTimeSummary() { document.getElementById('medTimeSummary').textContent = savedHour === null ? 'Chưa hẹn giờ' : `Hẹn giờ: ${savedHour.toString().padStart(2,'0')}:${savedMinute}`; }
+
+        function openScheduleModal() { selectedHour = savedHour; selectedMinute = savedMinute; document.getElementById('scheduleModal').classList.add('active'); renderClockUI(); }
+        function closeScheduleModal() { document.getElementById('scheduleModal').classList.remove('active'); selectedHour = savedHour; selectedMinute = savedMinute; }
+
+        function saveScheduleTime() {
+            const validHours = medBounds[document.getElementById('medSession').value];
+            if (selectedHour === null || !validHours.includes(selectedHour)) return alert('Vui lòng chọn một giờ hợp lệ!');
+            savedHour = selectedHour; savedMinute = selectedMinute;
+            updateMedTimeSummary(); closeScheduleModal();
+        }
+        
+        function updateSnooze(val) { localStorage.setItem('medSnooze', val); }
+        document.getElementById('snoozeSelect').value = localStorage.getItem('medSnooze') || '5';
+
+        function renderClockUI() {
+            const validHours = medBounds[document.getElementById('medSession').value];
+            if (selectedHour !== null && !validHours.includes(selectedHour)) selectedHour = null;
+            if (savedHour !== null && !validHours.includes(savedHour)) { savedHour = null; savedMinute = '00'; updateMedTimeSummary(); }
+            
+            let html = '<div style="font-size:13px; font-weight:bold; color:#64748b; margin-bottom:5px;">Vòng ngoài: Giờ &nbsp; | &nbsp; Vòng trong: Phút</div>';
+            html += '<div class="clock-container"><div class="clock-center"></div>';
+            
+            const hoursToShow = []; for(let i=5; i<22; i++) hoursToShow.push(i);
+            hoursToShow.forEach((h, index) => {
+                let disabled = validHours.includes(h) ? '' : 'disabled';
+                let active = (selectedHour === h && !disabled) ? 'selected' : '';
+                let rad = ((index * (360 / hoursToShow.length)) - 90) * (Math.PI / 180);
+                html += `<div class="clock-item ${active} ${disabled}" style="left:${130 + 105 * Math.cos(rad)}px; top:${130 + 105 * Math.sin(rad)}px;" ${disabled?'':`onclick="selectHour(${h})"`}>${h.toString().padStart(2,'0')}</div>`;
+            });
+            
+            ['00', '15', '30', '45'].forEach((m, index) => {
+                let active = (selectedMinute === m) ? 'selected' : '';
+                let rad = ((index * 90) - 90) * (Math.PI / 180);
+                html += `<div class="clock-item minute-item ${active}" style="left:${130 + 55 * Math.cos(rad)}px; top:${130 + 55 * Math.sin(rad)}px;" onclick="selectedMinute='${m}'; renderClockUI();">${m}</div>`;
+            });
+            document.getElementById('scheduleClockUI').innerHTML = html + '</div>';
+        }
+
+        function selectHour(h) { selectedHour = h; renderClockUI(); }
+
+        function addMedicine() {
+            const name = document.getElementById('medName').value.trim();
+            const qty = document.getElementById('medQty').value.trim();
+            const session = document.getElementById('medSession').value;
+            if(!name || !qty || savedHour === null) return alert('Vui lòng nhập đủ thông tin và chọn giờ hợp lệ!');
+            
+            const timeStr = `${savedHour.toString().padStart(2,'0')}:${savedMinute}`;
+            tasks.push({
+                text: `${name} — ${qty} — ${session} — ${timeStr}`, 
+                completed: false, 
+                isMedicine: true, 
+                topic: 'Thuốc', 
+                medName: name, medQty: qty, medSession: session, medTime: timeStr, lastNotified: 0
+            });
+            
+            saveTasks(); renderTasks(); renderMedGrid();
+            document.getElementById('medName').value = ''; document.getElementById('medQty').value = '';
+            savedHour = null; savedMinute = '00'; selectedHour = null; selectedMinute = '00';
+            updateMedTimeSummary();
+        }
+
+        function renderMedGrid() {
+            const grid = document.getElementById('medGrid');
+            grid.innerHTML = '';
+            ['Sáng', 'Trưa', 'Chiều', 'Tối'].forEach((sess) => {
+                let colHTML = `<div class="med-col"><div class="med-col-header">${sess}</div>`;
+                tasks.forEach((t, index) => {
+                    if (t.isMedicine && t.medSession === sess) {
+                        colHTML += `
+                            <div class="med-task ${t.completed ? 'completed' : ''}">
+                                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${index})">
+                                <div class="med-task-info">
+                                    <strong>${t.medTime}</strong><br>
+                                    <span style="font-weight:600; color:var(--text);">${t.medName}</span> - <span style="color:#64748b;">${t.medQty}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                grid.innerHTML += colHTML + `</div>`;
+            });
+        }
+
+        setInterval(() => {
+            const key = getDateKey(new Date()); let t = JSON.parse(localStorage.getItem(key)) || [];
+            let mod = false; const now = new Date(); const snz = parseInt(localStorage.getItem('medSnooze') || '5') * 60000;
+            t.forEach((tk, i) => {
+                if (tk.isMedicine && !tk.completed) {
+                    const [h, m] = tk.medTime.split(':').map(Number);
+                    if (now.getTime() >= new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m).getTime()) {
+                        if (!tk.lastNotified || (now.getTime() - tk.lastNotified >= snz)) {
+                            if(Notification.permission === 'granted') {
+                                const n = new Notification('Đến giờ uống thuốc!', { body: `${tk.medName} — ${tk.medQty}`, requireInteraction: true });
+                                n.onclick = () => { let st = JSON.parse(localStorage.getItem(key))||[]; if(st[i]) { st[i].completed=true; localStorage.setItem(key, JSON.stringify(st)); if(key===getCurrentDateKey()){tasks=st;renderTasks();renderMedGrid();} } n.close(); };
+                            }
+                            tk.lastNotified = now.getTime(); mod = true;
+                        }
+                    }
+                }
+            });
+            if (mod) { localStorage.setItem(key, JSON.stringify(t)); if (key === getCurrentDateKey()) { tasks = t; renderTasks(); if(document.getElementById('medModal').classList.contains('active')) renderMedGrid(); } }
+        }, 30000);
+
+        const micBtn = document.getElementById('micBtn');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'vi-VN'; recognition.continuous = false;
+            recognition.onstart = () => { micBtn.classList.add('listening'); };
+            recognition.onresult = (event) => {
+                micBtn.classList.remove('listening');
+                const text = event.results[0][0].transcript.trim();
+                document.getElementById('taskInput').value = text;
+                if (normalizeText(text) === 'như cũ') { loadPreviousTasks(); document.getElementById('taskInput').value = ''; }
+                else addNewTask(text);
+            };
+            recognition.onerror = () => { micBtn.classList.remove('listening'); micBtn.classList.add('error'); setTimeout(() => micBtn.classList.remove('error'), 1000); };
+            recognition.onend = () => micBtn.classList.remove('listening');
+            micBtn.onclick = () => { if(!micBtn.classList.contains('listening')) recognition.start(); };
+        } else {
+            micBtn.onclick = () => alert('Trình duyệt không hỗ trợ nhận diện giọng nói!');
+        }
+
+        renderTabs();
+        renderTasks();
+        const topicDropdown = document.getElementById("topicDropdown");
+        const topicBtn = document.getElementById("topicDropdownBtn");
+        const topicInput = document.getElementById("taskTopic");
+        const topicOptions = topicDropdown.querySelectorAll(
+            ".topic-dropdown-menu button"
+        );
+
+        topicBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            topicDropdown.classList.toggle("open");
+        });
+
+        topicOptions.forEach(option => {
+            option.addEventListener("click", () => {
+                const value = option.dataset.value;
+                const text = option.textContent.trim();
+
+                topicInput.value = value;
+                topicBtn.querySelector("span:first-child").textContent = text;
+
+                topicOptions.forEach(item => {
+                    item.classList.remove("selected");
+                });
+
+                option.classList.add("selected");
+                topicDropdown.classList.remove("open");
+            });
+        });
+
+        document.addEventListener("click", () => {
+            topicDropdown.classList.remove("open");
+        });
+    </script>
+</body>
+</html>
