@@ -1,6 +1,3 @@
-Được. Nếu mục đích là **copy thẳng vào `README.md` trên GitHub**, mình sẽ giữ Markdown sạch, thân thiện và thiên về **hiện trạng + hướng phát triển**, không viết như proposal.
-
- README.md
 
 # Personal Learning & Productivity Tools
 
