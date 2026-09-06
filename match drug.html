@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="vi"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Offline Drug Matching - Multi Sheet v2.1</title>
+  <style>
+    :root{
+      --bg:#f6f7fb; --panel:#ffffff; --ink:#0f172a; --muted:#64748b; --border:#e5e7eb; --accent:#2563eb;
+      --ok:#16a34a; --bad:#ef4444; --shadow:0 8px 24px rgba(2,8,23,.08);
+      --chip:#ffffff; --chip-border:#e5e7eb; --pool-h: 168px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif}
+    
+    /* Header & Tabs */
+    header{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--border); padding-bottom: 0;}
+    header .wrap{max-width:1200px;margin:auto;padding:8px 10px;display:flex;flex-direction: column; gap:8px;}
+    .top-bar {display:flex; justify-content:space-between; align-items:center; width: 100%;}
+    
+    /* Tab Navigation */
+    .sheet-tabs {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        width: 100%;
+        scrollbar-width: none; /* Firefox */
+    }
+    .sheet-tabs::-webkit-scrollbar {display: none;} /* Chrome/Safari */
+
+    .tab-btn {
+        background: #f1f5f9;
+        border: 1px solid var(--border);
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--muted);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.2s;
+    }
+    .tab-btn:hover { background: #e2e8f0; }
+    .tab-btn.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        box-shadow: 0 2px 4px rgba(37,99,235,0.2);
+    }
+
+    .btn{appearance:none;border:1px solid var(--border);background:#fff;border-radius:8px;padding:6px 12px;font-weight:600;cursor:pointer;box-shadow:0 1px 0 rgba(0,0,0,.03);font-size:13px;white-space:nowrap}
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    .btn:active {transform: translateY(1px);}
+
+    main{max-width:1200px;margin:auto;padding:12px;}
+
+    .board-wrap{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);}
+    .board{overflow:auto;max-height:calc(100vh - var(--pool-h) - 160px); border-radius:16px;}
+
+    /* Grid System */
+    .grid{display:grid;grid-auto-rows:minmax(20px,auto);} 
+    .cell{border:1px solid var(--border); padding:8px; background:#fff; min-width:120px; position:relative; font-size:14px}
+    .cell.head{background:#f8fafc;font-weight:600; position:sticky; top:0; z-index:5; border-bottom: 2px solid var(--border);}
+    .cell.left{background:#f8fafc; font-weight:600; position:sticky; left:0; z-index:4; border-right: 2px solid var(--border);}
+    .cell.corner{z-index:6}
+    .cell .mini{font-size:10px;color:var(--muted); display: block; margin-top: 4px;}
+
+    /* Drop Zone */
+    .drop{background:#f9fafb; border:2px dashed #cbd5e1; border-radius:8px; height:100%; min-height: 40px; display:flex; flex-direction: column; justify-content:center; padding:4px;}
+    .drop.dragover{background: #eff6ff; border-color:var(--accent);}
+    .drop.filled{border-style:solid; border-color: transparent; background: transparent;}
+    .drop.ok{background:#ecfdf5; border: 2px solid #86efac}
+    .drop.bad{background:#fef2f2; border: 2px solid #fecaca; animation:shake .25s linear}
+
+    @keyframes shake{0%{transform:translateX(0)}25%{transform:translateX(-4px)}50%{transform:translateX(4px)}75%{transform:translateX(-3px)}100%{transform:translateX(0)}}
+
+    /* Chips */
+    .chip{
+        background:var(--chip); border:1px solid var(--chip-border); 
+        border-radius:6px; padding:6px 8px; 
+        box-shadow:0 2px 4px rgba(0,0,0,.05); 
+        cursor:grab; user-select:none; 
+        font-size:13px; line-height: 1.3;
+        display: inline-block; width: 100%;
+    }
+    .chip:active{cursor:grabbing}
+    .chip.selected { border: 2px solid var(--accent); background: #eff6ff; }
+    
+    /* Pool */
+    .pool{position:fixed; bottom:0; left:0; right:0; z-index:40; background:rgba(255,255,255,.98); backdrop-filter:blur(8px); border-top:1px solid var(--border); box-shadow: 0 -4px 20px rgba(0,0,0,0.05);}
+    .pool .wrap{margin:auto;padding:8px 12px; max-width:1200px}
+    .pool-controls{display:flex; gap:12px; align-items:center; justify-content:space-between; margin-bottom:8px}
+    .pool-body{
+        display:grid; 
+        grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); 
+        gap:8px; 
+        height: 120px; /* Fixed height for pool content */
+        overflow-y:auto; 
+        padding: 4px;
+    }
+
+    /* Mobile adjustments */
+    @media (max-width: 768px) {
+      .cell {min-width: 80px; padding: 4px; font-size: 11px;}
+      .chip {font-size: 10px; padding: 4px;}
+      .pool-body {grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); height: 110px;}
+      --pool-h: 160px;
+    }
+
+    .note{font-size: 12px; color: var(--muted); margin-bottom: 8px;}
+  </style>
+</head>
+<body>
+
+<header>
+    <div class="wrap">
+      <div class="top-bar">
+          <div style="display:flex;align-items:center;gap:8px">
+            <strong>Drug Match</strong>
+            <span style="font-size:10px; background:#eee; padding:2px 6px; border-radius:4px">v2.1 Fix Reset</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button id="btnFileImport" class="btn">📂 Nhập Excel</button>
+            <button id="btnReset" class="btn">↺ Chơi lại</button>
+          </div>
+      </div>
+      <div id="sheetTabs" class="sheet-tabs"><button class="tab-btn active">Sheet1</button></div>
+    </div>
+</header>
+
+<main>
+    <p class="note">Kéo thẻ từ dưới lên ô tương ứng. Trên điện thoại: Chạm thẻ rồi chạm ô.</p>
+    
+    <section class="board-wrap">
+      <div id="board" class="board"><div class="grid" style="grid-template-columns: 150px repeat(2, 200px); width: max-content;"><div class="cell head corner left">Thuốc</div><div class="cell head">ghfhf</div><div class="cell head">ghfhgfh</div><div class="cell left">vgvg</div><div class="cell"><div class="drop" data-drug="vgvg" data-col="ghfhf" data-answer="bhjhjk"><span class="mini">••••</span></div></div><div class="cell"><div class="drop" data-drug="vgvg" data-col="ghfhgfh" data-answer="hhvjvj"><span class="mini">••••</span></div></div><div class="cell left">ghch</div><div class="cell"><div class="drop" data-drug="ghch" data-col="ghfhf" data-answer="hjhhg"><span class="mini">••••</span></div></div><div class="cell"><div class="drop" data-drug="ghch" data-col="ghfhgfh" data-answer="vgvjgh"><span class="mini">••••</span></div></div><div class="cell left">fcfcg</div><div class="cell"><div class="drop" data-drug="fcfcg" data-col="ghfhf" data-answer="gjhgh"><span class="mini">••••</span></div></div><div class="cell"><div class="drop" data-drug="fcfcg" data-col="ghfhgfh" data-answer="vgvgh"><span class="mini">••••</span></div></div></div></div>
+
+      <div class="pool">
+        <div class="wrap">
+          <div class="pool-controls">
+            <div style="display:flex;gap:8px;align-items:center">
+               <label style="display:flex;gap:5px;align-items:center; font-size:12px">
+                <input type="checkbox" id="subset" checked=""> 
+                <span>Giới hạn 24 thẻ</span>
+              </label>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button id="btnShuffle" class="btn">Trộn thẻ</button>
+              <button id="btnCheck" class="btn primary">Kiểm tra</button>
+            </div>
+          </div>
+          <div id="pool" class="pool-body"><div class="chip" draggable="true" id="chip-bnybpkq4o" data-match-drug="vgvg" data-match-col="ghfhf">bhjhjk</div><div class="chip" draggable="true" id="chip-6jinnzivg" data-match-drug="ghch" data-match-col="ghfhgfh">vgvjgh</div><div class="chip" draggable="true" id="chip-3f8qyln1a" data-match-drug="fcfcg" data-match-col="ghfhf">gjhgh</div><div class="chip" draggable="true" id="chip-wf2p4pc8s" data-match-drug="vgvg" data-match-col="ghfhgfh">hhvjvj</div><div class="chip" draggable="true" id="chip-dec174vxr" data-match-drug="ghch" data-match-col="ghfhf">hjhhg</div><div class="chip" draggable="true" id="chip-azfccuci7" data-match-drug="fcfcg" data-match-col="ghfhgfh">vgvgh</div></div>
+        </div>
+      </div>
+    </section>
+</main>
+
+<input type="file" id="fileInput" accept=".xlsx, .xls" style="display:none">
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<script>
+// --- Cấu hình & Biến toàn cục ---
+const MAX_ROWS = 100;
+const MAX_COLS = 10;
+
+let sheetGames = {}; 
+let currentSheetName = null;
+let activeDrugs = []; 
+let activeCols = [];   
+let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+let selectedChip = null;
+
+// --- DOM Elements ---
+const dom = {
+    board: document.getElementById('board'),
+    pool: document.getElementById('pool'),
+    tabs: document.getElementById('sheetTabs'),
+    btnImport: document.getElementById('btnFileImport'),
+    fileInput: document.getElementById('fileInput'),
+    btnReset: document.getElementById('btnReset'),
+    btnShuffle: document.getElementById('btnShuffle'),
+    btnCheck: document.getElementById('btnCheck'),
+    chkSubset: document.getElementById('subset')
+};
+
+// --- Khởi tạo ---
+document.addEventListener('DOMContentLoaded', () => {
+    setupEventListeners();
+    
+    // Tải dữ liệu cũ nếu có
+    const saved = localStorage.getItem('dm_multi_sheets');
+    if(saved) {
+        try {
+            sheetGames = JSON.parse(saved);
+            const sheetNames = Object.keys(sheetGames);
+            if(sheetNames.length > 0){
+                renderTabs(sheetNames);
+                loadSheet(sheetNames[0]);
+            }
+        } catch(e) { console.error("Lỗi load save cũ", e); }
+    }
+});
+
+function setupEventListeners() {
+    dom.btnImport.addEventListener('click', () => dom.fileInput.click());
+    dom.fileInput.addEventListener('change', handleFileImport);
+
+    // Controls
+    dom.btnShuffle.addEventListener('click', buildPool);
+    
+    // --- SỬA LỖI NÚT RESET TẠI ĐÂY ---
+    dom.btnReset.addEventListener('click', () => {
+        if(currentSheetName) {
+            // Thay vì xóa logic phức tạp, ta chỉ cần load lại sheet từ đầu
+            // Việc này sẽ reset toàn bộ board và tạo lại pool đầy đủ
+            loadSheet(currentSheetName);
+        }
+    });
+
+    dom.btnCheck.addEventListener('click', checkAnswers);
+    dom.chkSubset.addEventListener('change', buildPool);
+
+    // Global Drop
+    document.body.addEventListener('dragover', e => e.preventDefault());
+    document.body.addEventListener('drop', e => {
+        e.preventDefault();
+        const id = e.dataTransfer.getData('text/plain');
+        const chip = document.getElementById(id);
+        if(chip && !e.target.closest('.drop')) {
+             returnChipToPool(chip);
+        }
+    });
+}
+
+// --- Xử lý File Excel ---
+function handleFileImport(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const data = new Uint8Array(e.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+
+        sheetGames = {}; 
+
+        workbook.SheetNames.forEach(sheetName => {
+            const rawData = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], {defval:""});
+            if (rawData.length > 0) {
+                const headers = Object.keys(rawData[0]);
+                const keyCol = headers[0];
+                const propCols = headers.slice(1).filter(c => c.trim() !== "");
+
+                const drugsData = rawData.map(row => {
+                    const d = { name: row[keyCol] };
+                    propCols.forEach(c => d[c] = row[c] ? String(row[c]).trim() : ""); 
+                    return d;
+                });
+
+                sheetGames[sheetName] = {
+                    columns: propCols.slice(0, MAX_COLS),
+                    drugs: drugsData.slice(0, MAX_ROWS)
+                };
+            }
+        });
+
+        localStorage.setItem('dm_multi_sheets', JSON.stringify(sheetGames));
+        const names = Object.keys(sheetGames);
+        if(names.length === 0) {
+            alert("Không tìm thấy dữ liệu hợp lệ trong file Excel!");
+            return;
+        }
+
+        renderTabs(names);
+        loadSheet(names[0]);
+        dom.fileInput.value = '';
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+function renderTabs(sheetNames) {
+    dom.tabs.innerHTML = '';
+    sheetNames.forEach(name => {
+        const btn = document.createElement('button');
+        btn.className = 'tab-btn';
+        btn.textContent = name;
+        btn.onclick = () => loadSheet(name);
+        dom.tabs.appendChild(btn);
+    });
+}
+
+function loadSheet(name) {
+    if(!sheetGames[name]) return;
+    currentSheetName = name;
+
+    Array.from(dom.tabs.children).forEach(btn => {
+        btn.classList.toggle('active', btn.textContent === name);
+    });
+
+    const source = sheetGames[name];
+    activeCols = [...source.columns];
+    
+    // Clone mới tinh từ source -> Đảm bảo dữ liệu luôn đầy đủ khi reset/chuyển tab
+    activeDrugs = JSON.parse(JSON.stringify(source.drugs));
+
+    buildGrid();
+    buildPool();
+}
+
+function buildGrid() {
+    dom.board.innerHTML = '';
+    const colWidth = isTouchDevice ? '130px' : '200px';
+    const gridStyle = `grid-template-columns: ${isTouchDevice?'90px':'150px'} repeat(${activeCols.length}, ${colWidth});`;
+    
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    grid.style = gridStyle;
+    grid.style.width = 'max-content';
+
+    grid.appendChild(createCell('Thuốc', ['head','corner','left']));
+    activeCols.forEach(col => {
+        grid.appendChild(createCell(col, ['head']));
+    });
+
+    activeDrugs.forEach(drug => {
+        grid.appendChild(createCell(drug.name, ['left']));
+        activeCols.forEach(col => {
+            const answer = drug[col];
+            const dropZone = createDropZone(drug.name, col, answer);
+            grid.appendChild(dropZone);
+        });
+    });
+
+    dom.board.appendChild(grid);
+}
+
+function createCell(text, classes=[]) {
+    const div = document.createElement('div');
+    div.className = `cell ${classes.join(' ')}`;
+    div.textContent = text || '';
+    return div;
+}
+
+function createDropZone(drugName, colName, correctAnswer) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    
+    const drop = document.createElement('div');
+    drop.className = 'drop';
+    drop.dataset.drug = drugName;
+    drop.dataset.col = colName;
+    drop.dataset.answer = correctAnswer; 
+
+    if(correctAnswer) {
+        const mini = document.createElement('span');
+        mini.className = 'mini';
+        mini.textContent = '••••';
+        drop.appendChild(mini);
+
+        drop.addEventListener('dragover', e => {
+            e.preventDefault();
+            drop.classList.add('dragover');
+        });
+        drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+        drop.addEventListener('drop', handleDrop);
+        
+        drop.addEventListener('click', () => {
+            if(selectedChip && !drop.classList.contains('filled')) {
+                placeChip(drop, selectedChip);
+                selectedChip = null;
+                document.querySelectorAll('.chip').forEach(c => c.classList.remove('selected'));
+            }
+        });
+    } else {
+        drop.style.background = '#f1f5f9'; 
+        drop.style.borderStyle = 'none';
+    }
+
+    cell.appendChild(drop);
+    return cell;
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('dragover');
+    const id = e.dataTransfer.getData('text/plain');
+    const chip = document.getElementById(id);
+    if(!chip) return;
+    placeChip(e.currentTarget, chip);
+}
+
+function placeChip(dropZone, chip) {
+    const existingChip = dropZone.querySelector('.chip');
+    if(existingChip) returnChipToPool(existingChip);
+
+    chip.remove(); 
+    const mini = dropZone.querySelector('.mini');
+    if(mini) mini.style.display = 'none';
+
+    dropZone.classList.add('filled');
+    dropZone.classList.remove('ok', 'bad'); 
+    dropZone.insertBefore(chip, null);
+}
+
+function returnChipToPool(chip) {
+    chip.classList.remove('selected');
+    chip.style.opacity = '1';
+    dom.pool.appendChild(chip);
+    
+    const parent = chip.parentElement;
+    if(parent && parent.classList.contains('drop')) {
+        parent.classList.remove('filled', 'ok', 'bad');
+        const mini = parent.querySelector('.mini');
+        if(mini) mini.style.display = 'block';
+    }
+}
+
+function buildPool() {
+        // 1. Tính toán danh sách cards từ dữ liệu nguồn
+        let allCards = [];
+        activeDrugs.forEach(d => {
+            activeCols.forEach(col => {
+                const val = d[col];
+                if(val) {
+                    allCards.push({ text: val, drug: d.name, col: col });
+                }
+            });
+        });
+
+        // 2. Xử lý Subset và Shuffle
+        let cardsToRender = [...allCards];
+        cardsToRender = cardsToRender.sort(() => Math.random() - 0.5);
+
+        if(dom.chkSubset.checked && cardsToRender.length > 24) {
+            cardsToRender = cardsToRender.slice(0, 24);
+        }
+
+        // 3. Lấy tập hợp ID của các cards hợp lệ sẽ xuất hiện (hoặc đang ở trên bảng)
+        const validIds = cardsToRender.map(c => 
+            'chip-' + btoa(unescape(encodeURIComponent(c.drug + '-' + c.col))).replace(/=/g, '')
+        );
+        
+        // Lấy danh sách ID của các chip hiện đang nằm trong các ô .drop
+        const chipsOnBoardIds = Array.from(document.querySelectorAll('.drop .chip')).map(c => c.id);
+
+        // 4. Render/Reuse chips vào Pool
+        cardsToRender.forEach(c => {
+            const stableId = 'chip-' + btoa(unescape(encodeURIComponent(c.drug + '-' + c.col))).replace(/=/g, '');
+            
+            // Nếu chip này đang nằm trên bảng, KHÔNG di chuyển nó về Pool, KHÔNG tạo mới
+            if (chipsOnBoardIds.includes(stableId)) {
+                return;
+            }
+
+            let chip = document.getElementById(stableId);
+
+            // Nếu chip chưa tồn tại, mới tạo mới
+            if (!chip) {
+                chip = document.createElement('div');
+                chip.className = 'chip';
+                chip.id = stableId;
+                chip.textContent = c.text;
+                chip.draggable = true;
+                chip.dataset.matchDrug = c.drug;
+                chip.dataset.matchCol = c.col;
+
+                chip.addEventListener('dragstart', e => {
+                    e.dataTransfer.setData('text/plain', chip.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    setTimeout(()=>chip.style.opacity='0.5',0);
+                });
+                chip.addEventListener('dragend', ()=>chip.style.opacity='1');
+                chip.addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    if(chip.closest('.drop')) {
+                        returnChipToPool(chip);
+                        return;
+                    }
+                    if(selectedChip === chip) {
+                        chip.classList.remove('selected');
+                        selectedChip = null;
+                    } else {
+                        if(selectedChip) selectedChip.classList.remove('selected');
+                        chip.classList.add('selected');
+                        selectedChip = chip;
+                    }
+                });
+            }
+
+            // Di chuyển chip vào Pool (tự động reorder nếu đã có sẵn trong Pool)
+            dom.pool.appendChild(chip);
+        });
+
+        // 5. Cleanup Pool: Xóa những chip trong Pool mà không thuộc danh sách Subset mới
+        const currentPoolChips = Array.from(dom.pool.children);
+        currentPoolChips.forEach(chip => {
+            if (!validIds.includes(chip.id)) {
+                chip.remove();
+            }
+        });
+    }
+
+function checkAnswers() {
+    const drops = document.querySelectorAll('.drop.filled');
+    let correctCount = 0;
+    
+    drops.forEach(drop => {
+        const chip = drop.querySelector('.chip');
+        if(!chip) return;
+
+        const expectedAnswer = drop.dataset.answer;
+        const actualAnswer = chip.textContent; 
+
+        if(actualAnswer === expectedAnswer) {
+            drop.classList.add('ok');
+            drop.classList.remove('bad');
+            correctCount++;
+        } else {
+            drop.classList.add('bad');
+            drop.classList.remove('ok');
+        }
+    });
+
+    if(correctCount === drops.length && drops.length > 0) {
+        alert("Tuyệt vời! Bạn đã ghép đúng tất cả các thẻ.");
+    }
+}
+</script>
+
+</body></html>
